@@ -10,7 +10,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\EventHandlerController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\EnrollmentController;
-
+use App\Http\Controllers\TodoController;
 
 
 
@@ -36,6 +36,7 @@ Route::middleware(['auth:sanctum', 'role:teacher'])->prefix('teacher')->group(fu
     Route::get('getStudents', [EnrollmentController::class, 'getStudents']);
     Route::get('getSubjects', [EnrollmentController::class, 'getSubjects']);
     Route::apiResource('enrollments', EnrollmentController::class);
+    Route::apiResource('todos', TodoController::class);
 
 });
 Route::middleware(['auth:sanctum', 'role:teacher'])->get('/teacher/dashboard', function () {
