@@ -41,40 +41,38 @@ class TodoController extends Controller
     }
     public function update(Request $request, $id)
     {
+        \Log::info('Incoming Request Data:', $request->all());
         $request->validate([
-            'type' => 'nullable|string',
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'type' => 'required|string',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'file' => 'nullable|string', 
         ]);
-
+    
         $todo = Todo::findOrFail($id);
-
+        \Log::info('Full Request Data:', $request->all());
         $todoData = $request->only(['type', 'title', 'description']);
-
-        // Debugging output
-        \Log::info('Request Data:', $request->all());
-
-        if ($request->hasFile('file')) {
+        if ($request->has('file')) {
             if ($todo->file) {
                 Storage::disk('public')->delete($todo->file);
             }
-            $file = $request->file('file')->store('files', 'public');
+            $file = $request->input('file'); 
             $todoData['file'] = $file;
         } else {
-            $todoData['file'] = $todo->file; // Keep the old file if no new file is provided
+            $todoData['file'] = $todo->file;
         }
-
-        // Debugging output
+    
         \Log::info('Todo Data to be Updated:', $todoData);
-
+    
         $todo->update($todoData);
-
-        // Debugging output
+    
         \Log::info('Updated Todo:', $todo->toArray());
-
         return response()->json($todo);
     }
+    
+
+    
+    
 
 
 

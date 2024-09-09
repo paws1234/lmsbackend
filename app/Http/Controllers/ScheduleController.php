@@ -1,14 +1,16 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Schedule;
+use App\Models\Teacher; // Import Teacher model
 use Illuminate\Http\Request;
 
 class ScheduleController extends Controller
 {
     public function index()
     {
-        $schedules = Schedule::with('teacher')->get();
+        $schedules = Schedule::with('teacher')->get(); 
         return response()->json($schedules);
     }
 
@@ -25,7 +27,7 @@ class ScheduleController extends Controller
             'time_in' => 'required|date_format:H:i',
             'time_out' => 'required|date_format:H:i',
             'room' => 'required|string|max:255',
-            'teacher_id' => 'required|exists:teachers,id',
+            'teacher_id' => 'required|exists:teachers,id', 
         ]);
 
         $schedule = Schedule::create($request->all());
@@ -52,5 +54,11 @@ class ScheduleController extends Controller
         $schedule = Schedule::findOrFail($id);
         $schedule->delete();
         return response()->json(null, 204);
+    }
+
+    public function getTeachers()
+    {
+        $teachers = Teacher::all(); 
+        return response()->json($teachers);
     }
 }
