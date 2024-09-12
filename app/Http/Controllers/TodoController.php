@@ -26,66 +26,50 @@ class TodoController extends Controller
             'type' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'fileUrl' => 'nullable|url', 
         ]);
-
-        $todoData = $request->only(['type', 'title', 'description']);
-
-        if ($request->hasFile('file')) {
-            $file = $request->file('file')->store('files', 'public');
-            $todoData['file'] = $file;
+    
+        $todoData = $request->only(['type', 'title', 'description', 'fileUrl']);
+    
+        if (isset($todoData['fileUrl'])) {
+            $todoData['file'] = $todoData['fileUrl']; 
+            unset($todoData['fileUrl']);
         }
-
+    
         $todo = Todo::create($todoData);
+    
         return response()->json($todo, 201);
     }
+    
     public function update(Request $request, $id)
     {
+        \Log::info('Incoming Request Data:', $request->all());
+
         $request->validate([
-            'type' => 'nullable|string',
-            'title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'type' => 'required|string',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'fileUrl' => 'nullable|url', 
         ]);
-
+    
         $todo = Todo::findOrFail($id);
-
         $todoData = $request->only(['type', 'title', 'description']);
 
-        // Debugging output
-        \Log::info('Request Data:', $request->all());
-
-        if ($request->hasFile('file')) {
-            if ($todo->file) {
-                Storage::disk('public')->delete($todo->file);
-            }
-            $file = $request->file('file')->store('files', 'public');
-            $todoData['file'] = $file;
-        } else {
-            $todoData['file'] = $todo->file; // Keep the old file if no new file is provided
+        if ($request->filled('fileUrl')) {
+            $todoData['file'] = $request->input('fileUrl');
         }
-
-        // Debugging output
-        \Log::info('Todo Data to be Updated:', $todoData);
-
+    
         $todo->update($todoData);
-
-        // Debugging output
+    
         \Log::info('Updated Todo:', $todo->toArray());
-
         return response()->json($todo);
     }
-
-
-
-
-
-
+    
+    
     public function destroy($id)
     {
         $todo = Todo::findOrFail($id);
 
-        // Delete the file if it exists
         if ($todo->file) {
             Storage::disk('public')->delete($todo->file);
         }
