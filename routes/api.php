@@ -11,7 +11,7 @@ use App\Http\Controllers\EventHandlerController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\TodoController;
-
+use App\Http\Controllers\QuestionController;
 
 
 Route::post('login', [AuthController::class, 'login']);
@@ -37,6 +37,7 @@ Route::middleware(['auth:sanctum', 'role:teacher'])->prefix('teacher')->group(fu
     Route::get('getSubjects', [EnrollmentController::class, 'getSubjects']);
     Route::apiResource('enrollments', EnrollmentController::class);
     Route::apiResource('todos', TodoController::class);
+    Route::apiResource('questions', QuestionController::class);
 
 });
 Route::middleware(['auth:sanctum', 'role:teacher'])->get('/teacher/dashboard', function () {
