@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 
@@ -8,13 +10,17 @@ class SubjectController extends Controller
 {
     public function index()
     {
-        $subjects = Subject::all();
+        $teacherId = Auth::id();
+        $subjects = Subject::where('teacher_id', $teacherId)->get();
+        
         return response()->json($subjects);
     }
-
+    
     public function show($id)
     {
-        $subject = Subject::findOrFail($id);
+        $teacherId = Auth::id();
+        $subject = Subject::where('id', $id)->where('teacher_id', $teacherId)->firstOrFail();
+        
         return response()->json($subject);
     }
 
@@ -24,8 +30,9 @@ class SubjectController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
-
-        $subject = Subject::create($request->all());
+        
+        $subject = Subject::create(array_merge($request->all(), ['teacher_id' => Auth::id()]));
+        
         return response()->json($subject, 201);
     }
 
@@ -36,14 +43,18 @@ class SubjectController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $subject = Subject::findOrFail($id);
+        $teacherId = Auth::id();
+        $subject = Subject::where('id', $id)->where('teacher_id', $teacherId)->firstOrFail();
+        
         $subject->update($request->all());
         return response()->json($subject);
     }
 
     public function destroy($id)
     {
-        $subject = Subject::findOrFail($id);
+        $teacherId = Auth::id();
+        $subject = Subject::where('id', $id)->where('teacher_id', $teacherId)->firstOrFail();
+        
         $subject->delete();
         return response()->json(null, 204);
     }

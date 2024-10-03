@@ -17,6 +17,7 @@ class CreateEnrollmentsTable extends Migration
             $table->id();
             $table->foreignId('student_id')->constrained('students')->onDelete('cascade');
             $table->foreignId('subject_id')->constrained('subjects')->onDelete('cascade');
+            $table->foreignId('teacher_id')->nullable()->constrained('teachers', 'user_id')->onDelete('set null');
             $table->timestamps();
         });
     }
