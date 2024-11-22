@@ -25,5 +25,10 @@ public function schedules()
     return $this->hasMany(Schedule::class);
 }
 
+public function questions()
+{
+    return $this->hasMany(Question::class);
+}
+
 
 }

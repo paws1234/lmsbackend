@@ -12,6 +12,7 @@ class Subject extends Model
         'title',
         'description',
         'teacher_id',
+        'schedule',
     ];
 
     public function teacher()

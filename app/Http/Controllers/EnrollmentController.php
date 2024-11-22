@@ -13,19 +13,19 @@ class EnrollmentController extends Controller
 {
     public function index()
 {
-    // Get the current logged-in user's user_id
+    
     $currentUserId = Auth::id();
 
-    // Fetch the teacher's ID associated with the current user
+    
     $teacher = Teacher::where('user_id', $currentUserId)->first();
 
     if (!$teacher) {
         return response()->json(['error' => 'Teacher not found for the current user.'], 404);
     }
 
-    // Get enrollments associated with the logged-in teacher
+    
     $enrollments = Enrollment::with(['student', 'subject'])
-        ->where('teacher_id', $teacher->user_id) // Use teacher's user_id as teacher_id in enrollments
+        ->where('teacher_id', $teacher->id) 
         ->get();
 
         return response()->json($enrollments);
@@ -39,7 +39,7 @@ public function store(Request $request)
         'subject_name' => 'required|string|max:255',
     ]);
 
-    // Find the student and subject based on provided names
+    
     $student = Student::where('name', $request->student_name)->first();
     $subject = Subject::where('title', $request->subject_name)->first();
 
@@ -47,21 +47,21 @@ public function store(Request $request)
         return response()->json(['error' => 'Student or Subject not found'], 404);
     }
 
-    // Get the current teacher's user_id
-    $teacherId = Auth::id(); // Assuming this is the correct user ID for the teacher
+    
+    $teacherId = Auth::id(); 
 
-    // Ensure the teacher exists in the teachers table
+    
     $teacher = Teacher::where('user_id', $teacherId)->first();
     
     if (!$teacher) {
         return response()->json(['error' => 'Teacher not found for the current user.'], 404);
     }
 
-    // Create the enrollment
+    
     $enrollment = Enrollment::create([
         'student_id' => $student->id,
         'subject_id' => $subject->id,
-        'teacher_id' => $teacher->user_id, // Use the user_id from the teachers table
+        'teacher_id' => $teacher->id, 
     ]);
 
     return response()->json($enrollment, 201);
@@ -113,8 +113,11 @@ public function store(Request $request)
     }
 
     public function getSubjects()
-    {
-        $subjects = Subject::all(['id', 'title']);
-        return response()->json($subjects);
-    }
+{
+    $teacher_id = Auth::id();
+
+    $subjects = Subject::where('teacher_id', $teacher_id)->get(['id', 'title']);
+
+    return response()->json($subjects);
+}
 }

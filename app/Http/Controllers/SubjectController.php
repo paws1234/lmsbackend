@@ -29,6 +29,7 @@ class SubjectController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'schedule'=> 'nullable|string',
         ]);
         
         $subject = Subject::create(array_merge($request->all(), ['teacher_id' => Auth::id()]));
@@ -41,6 +42,7 @@ class SubjectController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'schedule'=> 'nullable|string',
         ]);
 
         $teacherId = Auth::id();

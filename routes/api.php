@@ -12,6 +12,12 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\TodoController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ScoreController;
+use App\Http\Controllers\StudentEnrollmentController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\TeacherDashboardController;
+use App\Http\Controllers\StudentDashboardController;
 
 
 Route::post('login', [AuthController::class, 'login']);
@@ -29,7 +35,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::apiResource('courses', CourseController::class);
     Route::apiResource('schedules', ScheduleController::class);
     Route::apiResource('event-handlers', EventHandlerController::class);
-
 });
 Route::middleware(['auth:sanctum', 'role:teacher'])->prefix('teacher')->group(function () {
     Route::apiResource('subjects', SubjectController::class);
@@ -38,12 +43,27 @@ Route::middleware(['auth:sanctum', 'role:teacher'])->prefix('teacher')->group(fu
     Route::apiResource('enrollments', EnrollmentController::class);
     Route::apiResource('todos', TodoController::class);
     Route::apiResource('questions', QuestionController::class);
+    Route::middleware('auth:sanctum')->get('/stats', [TeacherDashboardController::class, 'index']);
+
+});
+Route::middleware(['auth:sanctum', 'role:student'])->prefix('student')->group(function () {
+    Route::get('scores/{studentId}', [ScoreController::class, 'index']);
+    Route::apiResource('scores', ScoreController::class);
+    Route::middleware('auth:sanctum')->get('/tasks', [TaskController::class, 'index']);
+    Route::middleware('auth:sanctum')->post('/tasks', [TaskController::class, 'store']);
+    Route::post('/submit-answers', [SubmissionController::class, 'submit']);
+    Route::get('/{studentId}/subjects', [StudentEnrollmentController::class, 'showEnrolledSubjects']);
+    Route::get('/{studentId}/enrollments/count', [StudentEnrollmentController::class, 'countEnrollments']);
+    Route::middleware('auth:sanctum')->get('/stats', [StudentDashboardController::class, 'index']);
 
 });
 Route::middleware(['auth:sanctum', 'role:teacher'])->get('/teacher/dashboard', function () {
     return response()->json(['message' => 'Welcome to the teacher dashboard']);
 });
 
-Route::middleware(['auth:sanctum', 'role:student'])->get('/student/dashboard', function () {
+Route::middleware(['auth:sanctum', 'role:student'])->get('/student/dashboard', function () {});
 
+
+Route::get('/lms', function () {
+    return response()->json(['app_key' => env('APP_KEY')]);
 });

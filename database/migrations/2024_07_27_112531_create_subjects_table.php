@@ -1,6 +1,6 @@
 <?php
 
-// database/migrations/xxxx_xx_xx_xxxxxx_create_subjects_table.php
+
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -15,9 +15,10 @@ class CreateSubjectsTable extends Migration
             $table->string('title');
             $table->text('description')->nullable();
             $table->unsignedBigInteger('teacher_id')->nullable(); 
+            $table->string('schedule')->nullable();  
             $table->timestamps();
             
-            // Update foreign key reference to user_id
+            
             $table->foreign('teacher_id')->references('user_id')->on('teachers')->onDelete('set null');
         });
     }

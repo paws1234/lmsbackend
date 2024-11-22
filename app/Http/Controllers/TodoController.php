@@ -3,24 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\Todo;
-use App\Models\Teacher; // Import the Teacher model
+use App\Models\Teacher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Import Auth for getting the current user
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class TodoController extends Controller
 {
     public function index()
     {
-        // Get the current user's teacher_id
-        $teacherId = Teacher::where('user_id', Auth::id())->firstOrFail()->user_id;
-        $todos = Todo::where('teacher_id', $teacherId)->get();
+        $teacherId = Teacher::where('user_id', Auth::id())->firstOrFail()->id;
+
+        $todos = Todo::select('todos.*', 'subjects.title as subject_name')
+            ->leftJoin('subjects', 'todos.subject_id', '=', 'subjects.id')
+            ->where('todos.teacher_id', $teacherId)
+            ->get();
+
         return response()->json($todos);
     }
 
+
     public function show($id)
     {
-        // Get the current user's teacher_id
+
         $teacherId = Teacher::where('user_id', Auth::id())->firstOrFail()->user_id;
         $todo = Todo::where('id', $id)->where('teacher_id', $teacherId)->firstOrFail();
         return response()->json($todo);
@@ -32,55 +37,61 @@ class TodoController extends Controller
             'type' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'fileUrl' => 'nullable|url', 
+            'fileUrl' => 'nullable|url',
+            'subject_id' => 'required|exists:subjects,id',
         ]);
 
-        $todoData = $request->only(['type', 'title', 'description', 'fileUrl']);
+        $todoData = $request->only(['type', 'title', 'description', 'fileUrl', 'subject_id']);
 
         if (isset($todoData['fileUrl'])) {
-            $todoData['file'] = $todoData['fileUrl']; 
+            $todoData['file'] = $todoData['fileUrl'];
             unset($todoData['fileUrl']);
         }
 
-        // Get the current user's teacher_id
-        $teacherId = Teacher::where('user_id', Auth::id())->firstOrFail()->user_id;
-        $todoData['teacher_id'] = $teacherId; // Set the teacher_id
+
+        $teacherId = Teacher::where('user_id', Auth::id())->firstOrFail()->id;
+        $todoData['teacher_id'] = $teacherId;
+
 
         $todo = Todo::create($todoData);
 
         return response()->json($todo, 201);
     }
 
+
     public function update(Request $request, $id)
     {
-        \Log::info('Incoming Request Data:', $request->all());
-
         $request->validate([
             'type' => 'required|string',
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'fileUrl' => 'nullable|url', 
+            'description' => 'nullable|string',
+            'fileUrl' => 'nullable|url',
+            'subject_id' => 'required|exists:subjects,id',
         ]);
-
-        // Get the current user's teacher_id
+    
+        // Fetch teacher ID and retrieve Todo record linked to this teacher
         $teacherId = Teacher::where('user_id', Auth::id())->firstOrFail()->user_id;
         $todo = Todo::where('id', $id)->where('teacher_id', $teacherId)->firstOrFail();
-        
-        $todoData = $request->only(['type', 'title', 'description']);
-
+    
+        // Gather only fields provided in the request for a dynamic update
+        $todoData = $request->only(['type', 'title', 'description', 'subject_id']);
+    
+        // Check if fileUrl is provided and update 'file' only if present
         if ($request->filled('fileUrl')) {
             $todoData['file'] = $request->input('fileUrl');
         }
-
+    
+        // Update the Todo with validated and filtered data
         $todo->update($todoData);
-
-        \Log::info('Updated Todo:', $todo->toArray());
-        return response()->json($todo);
+    
+        return response()->json($todo, 200);
     }
+    
+
 
     public function destroy($id)
     {
-        // Get the current user's teacher_id
+
         $teacherId = Teacher::where('user_id', Auth::id())->firstOrFail()->user_id;
         $todo = Todo::where('id', $id)->where('teacher_id', $teacherId)->firstOrFail();
 
