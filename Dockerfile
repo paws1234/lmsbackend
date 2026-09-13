@@ -11,12 +11,14 @@ FROM php:8.2-cli
 RUN echo 'precedence ::ffff:0:0/96  100' >> /etc/gai.conf
 
 # libonig-dev is needed to build the mbstring extension; unzip lets Composer
-# extract package archives; git covers the few dependencies shipped as sources.
+# extract package archives; git covers the few dependencies shipped as sources;
+# gosu lets docker-entrypoint.sh drop from root to the checkout's owner.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
         unzip \
         curl \
+        gosu \
         libonig-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,6 +41,12 @@ RUN composer install \
 
 COPY . .
 
+# Fixes ownership of Laravel's writable directories on start-up, then runs the
+# command as whoever owns the checkout — see the file for the reasoning.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 8000
 
+ENTRYPOINT ["docker-php-entrypoint", "/usr/local/bin/docker-entrypoint.sh"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

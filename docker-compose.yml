@@ -36,9 +36,6 @@ services:
       context: .
     image: lms-backend:dev
     restart: unless-stopped
-    # Run as the host user so the files Laravel writes (storage/logs/laravel.log,
-    # storage/framework/views/*, bootstrap/cache/*) stay owned by you.
-    user: "${LMS_DOCKER_UID:-1000}:${LMS_DOCKER_GID:-1000}"
     depends_on:
       db:
         condition: service_healthy

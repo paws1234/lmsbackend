@@ -54,8 +54,11 @@ block listing them is at the bottom of `.env.example`.
 | `LMS_DB_HOST_PORT`         | `3307`                      | Host port for MariaDB (not 3306, so XAMPP's MySQL can still run). |
 | `LMS_DB_DATABASE` / `LMS_DB_USERNAME` / `LMS_DB_PASSWORD` | `lms` | Also used to create the database on first boot. |
 | `LMS_DB_ROOT_PASSWORD`     | `lms_root`                  | MariaDB root password.                                    |
-| `LMS_DOCKER_UID` / `LMS_DOCKER_GID` | `1000`             | The user the API container runs as, so Laravel's log/view/cache files stay yours. Set to `id -u` / `id -g`. |
 | `LMS_APP_KEY`              | the project's existing key  | See below.                                                |
+
+Nothing has to be configured for your user account: the image's entrypoint works
+out who owns the checkout and runs the API as them, so the files Laravel writes
+(`storage/logs`, compiled views, `bootstrap/cache`) stay editable on the host.
 
 ### About `APP_KEY`
 
