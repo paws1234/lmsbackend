@@ -12,11 +12,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Creates or repairs the administrator account. A fresh database has no
+        // admin at all, which makes signing in as one impossible — see
+        // AdminUserSeeder for the optional ADMIN_NAME / ADMIN_EMAIL /
+        // ADMIN_PASSWORD overrides.
+        $this->call([
+            AdminUserSeeder::class,
+        ]);
     }
 }
