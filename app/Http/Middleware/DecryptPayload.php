@@ -21,6 +21,15 @@ class DecryptPayload
         // Retrieve the raw request body
         $payload = $request->getContent();
 
+        // Nothing to decode.  This matters for requests that legitimately carry no
+        // payload, e.g. POST /logout: `isBase64('')` returns true (an empty string
+        // round-trips through base64), so the base64 branch below would run and
+        // fail on json_decode(''), rejecting the request with a 400 before it ever
+        // reached the route.  Same reasoning as the GET check above.
+        if (trim($payload) === '') {
+            return $next($request);
+        }
+
         try {
             // First, check if the payload is Base64 encoded
             if ($this->isBase64($payload)) {
