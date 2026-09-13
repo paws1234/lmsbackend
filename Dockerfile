@@ -52,4 +52,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 8000
 
 ENTRYPOINT ["docker-php-entrypoint", "/usr/local/bin/docker-entrypoint.sh"]
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Shell form on purpose: the exec form would pass a literal "${PORT}" to
+# artisan and the container would never bind the port.  Shell form means the
+# variable is expanded, so a host that assigns one (Render sets PORT, default
+# 10000) gets honoured, while compose and local runs keep 8000.
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
