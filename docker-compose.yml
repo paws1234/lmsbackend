@@ -1,0 +1,80 @@
+# Laravel API + MariaDB, self-contained.
+#
+#   docker compose up -d --build
+#   docker compose exec backend php artisan migrate     # first run only
+#   curl http://localhost:8000/api/lms
+#
+# The Vue frontend lives in its own repository (lmsfrontend) and runs as a
+# separate compose project: the *browser* is what calls this API, so the two
+# stacks never need to share a Docker network.
+name: lmsbackend
+
+services:
+  db:
+    image: mariadb:lts
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${LMS_DB_ROOT_PASSWORD:-lms_root}
+      MARIADB_DATABASE: ${LMS_DB_DATABASE:-lms}
+      MARIADB_USER: ${LMS_DB_USERNAME:-lms}
+      MARIADB_PASSWORD: ${LMS_DB_PASSWORD:-lms}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      # Published on 3307 by default so it cannot collide with a local XAMPP
+      # MySQL on 3306.  The API always reaches it as db:3306.
+      - "${LMS_DB_HOST_PORT:-3307}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  backend:
+    build:
+      context: .
+    image: lms-backend:dev
+    restart: unless-stopped
+    # Run as the host user so the files Laravel writes (storage/logs/laravel.log,
+    # storage/framework/views/*, bootstrap/cache/*) stay owned by you.
+    user: "${LMS_DOCKER_UID:-1000}:${LMS_DOCKER_GID:-1000}"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_NAME: CTU LMS
+      APP_ENV: local
+      APP_DEBUG: "true"
+      # Must match the key the frontend decrypts responses with, i.e. the
+      # APP_KEY the API was provisioned with.  Override with LMS_APP_KEY.
+      APP_KEY: ${LMS_APP_KEY:-base64:/bdLq63o8GHzO/KFiXXVmRgShpXRSS2okcRmfwNbbwM=}
+      APP_URL: http://localhost:${LMS_BACKEND_PORT:-8000}
+      LOG_CHANNEL: stack
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: ${LMS_DB_DATABASE:-lms}
+      DB_USERNAME: ${LMS_DB_USERNAME:-lms}
+      DB_PASSWORD: ${LMS_DB_PASSWORD:-lms}
+      SESSION_DRIVER: file
+      CACHE_DRIVER: file
+      QUEUE_CONNECTION: sync
+      FILESYSTEM_DISK: local
+    volumes:
+      # Live source code...
+      - .:/var/www/html
+      # ...but keep the dependencies installed in the image, not the host's.
+      - backend_vendor:/var/www/html/vendor
+    ports:
+      - "${LMS_BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/lms"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+volumes:
+  db_data:
+  backend_vendor:

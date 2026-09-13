@@ -1,3 +1,36 @@
+# CTU LMS — Backend (Laravel API)
+
+The REST API behind the CTU LMS: Laravel 10, Sanctum token auth and MariaDB/MySQL.
+Every response except `GET /api/lms` is encrypted with `APP_KEY`.
+
+The Vue frontend lives in its own repository: <https://github.com/paws1234/lmsfrontend>.
+
+## Run with Docker
+
+```bash
+docker compose up -d --build
+docker compose exec backend php artisan migrate   # first run only
+```
+
+- API: <http://localhost:8000>
+- Database: `localhost:3307`
+
+See [DOCKER.md](DOCKER.md) for the full command reference, configuration and
+troubleshooting.
+
+## Run without Docker
+
+Copy `.env.example` to `.env`, point `DB_*` at a local MySQL, then:
+
+```bash
+composer install
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
