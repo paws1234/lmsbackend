@@ -10,9 +10,10 @@ FROM php:8.2-cli
 # Preferring IPv4 makes both the build and runtime network calls work.
 RUN echo 'precedence ::ffff:0:0/96  100' >> /etc/gai.conf
 
-# libonig-dev is needed to build the mbstring extension; unzip lets Composer
-# extract package archives; git covers the few dependencies shipped as sources;
-# gosu lets docker-entrypoint.sh drop from root to the checkout's owner.
+# libonig-dev is needed to build the mbstring extension; libpq-dev provides the
+# headers pdo_pgsql compiles against; unzip lets Composer extract package
+# archives; git covers the few dependencies shipped as sources; gosu lets
+# docker-entrypoint.sh drop from root to the checkout's owner.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         git \
@@ -20,10 +21,12 @@ RUN apt-get update \
         curl \
         gosu \
         libonig-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# pdo_mysql talks to the db service, mbstring is a hard Laravel requirement.
-RUN docker-php-ext-install -j"$(nproc)" mbstring pdo_mysql
+# pdo_pgsql talks to the database (a local Postgres or Supabase), mbstring is a
+# hard Laravel requirement.
+RUN docker-php-ext-install -j"$(nproc)" mbstring pdo_pgsql
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

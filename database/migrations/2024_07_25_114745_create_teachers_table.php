@@ -12,7 +12,11 @@ class CreateTeachersTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->unsignedBigInteger('user_id');
+            // Unique because `subjects.teacher_id` and `tasks.teacher_id` both
+            // point at this column.  MySQL is happy to reference a merely
+            // indexed column, but PostgreSQL refuses a foreign key unless the
+            // referenced column has a unique constraint.
+            $table->unsignedBigInteger('user_id')->unique();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

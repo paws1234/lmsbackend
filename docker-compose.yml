@@ -1,8 +1,12 @@
-# Laravel API + MariaDB, self-contained.
+# Laravel API + PostgreSQL, self-contained.
 #
 #   docker compose up -d --build
 #   docker compose exec backend php artisan migrate     # first run only
 #   curl http://localhost:8000/api/lms
+#
+# The database this talks to is whatever the LMS_DB_* values below resolve to: a
+# throwaway Postgres container by default, or a hosted Supabase project when you
+# set them in .env — see the Supabase section of DOCKER.md.
 #
 # The Vue frontend lives in its own repository (lmsfrontend) and runs as a
 # separate compose project: the *browser* is what calls this API, so the two
@@ -11,21 +15,21 @@ name: lmsbackend
 
 services:
   db:
-    image: mariadb:lts
+    image: postgres:16
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: ${LMS_DB_ROOT_PASSWORD:-lms_root}
-      MARIADB_DATABASE: ${LMS_DB_DATABASE:-lms}
-      MARIADB_USER: ${LMS_DB_USERNAME:-lms}
-      MARIADB_PASSWORD: ${LMS_DB_PASSWORD:-lms}
+      POSTGRES_DB: ${LMS_DB_DATABASE:-lms}
+      POSTGRES_USER: ${LMS_DB_USERNAME:-lms}
+      POSTGRES_PASSWORD: ${LMS_DB_PASSWORD:-lms}
     volumes:
-      - db_data:/var/lib/mysql
+      - pg_data:/var/lib/postgresql/data
     ports:
-      # Published on 3307 by default so it cannot collide with a local XAMPP
-      # MySQL on 3306.  The API always reaches it as db:3306.
-      - "${LMS_DB_HOST_PORT:-3307}:3306"
+      # Published on 5433 by default so it cannot collide with a Postgres that
+      # is already running on the host (a local install usually owns 5432).
+      # The API always reaches it as db:5432.
+      - "${LMS_DB_HOST_PORT:-5433}:5432"
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "pg_isready -U ${LMS_DB_USERNAME:-lms} -d ${LMS_DB_DATABASE:-lms}"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -48,12 +52,24 @@ services:
       APP_KEY: ${LMS_APP_KEY:-base64:/bdLq63o8GHzO/KFiXXVmRgShpXRSS2okcRmfwNbbwM=}
       APP_URL: http://localhost:${LMS_BACKEND_PORT:-8000}
       LOG_CHANNEL: stack
-      DB_CONNECTION: mysql
-      DB_HOST: db
-      DB_PORT: "3306"
+      DB_CONNECTION: pgsql
+      # Defaults to the `db` container.  Set LMS_DB_HOST to a Supabase pooler
+      # hostname (and LMS_DB_SSLMODE=require) to run against the cloud instead.
+      DB_HOST: ${LMS_DB_HOST:-db}
+      DB_PORT: "${LMS_DB_PORT:-5432}"
       DB_DATABASE: ${LMS_DB_DATABASE:-lms}
       DB_USERNAME: ${LMS_DB_USERNAME:-lms}
       DB_PASSWORD: ${LMS_DB_PASSWORD:-lms}
+      DB_SSLMODE: ${LMS_DB_SSLMODE:-prefer}
+      # A single connection URI, if you would rather use one than the DB_*
+      # values above.  Deliberately NOT prefixed with LMS_ like the rest: the
+      # same value is wanted both by the container and by `php artisan` on the
+      # host.  It takes precedence over every DB_* value when non-empty, and an
+      # empty value means "not set".
+      DATABASE_URL: ${DATABASE_URL:-}
+      # Supabase's transaction pooler (port 6543) cannot hold prepared
+      # statements across transactions; set this to true when using it.
+      DB_EMULATE_PREPARES: "${LMS_DB_EMULATE_PREPARES:-false}"
       SESSION_DRIVER: file
       CACHE_DRIVER: file
       QUEUE_CONNECTION: sync
@@ -73,5 +89,7 @@ services:
       start_period: 30s
 
 volumes:
-  db_data:
+  # Named for Postgres, not `db_data`, so a leftover MariaDB data directory
+  # cannot end up mounted where initdb expects an empty one.
+  pg_data:
   backend_vendor:

@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', 'pgsql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -71,11 +71,23 @@ return [
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
-            'charset' => 'utf8',
+            'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'search_path' => env('DB_SEARCH_PATH', 'public'),
+            // Supabase terminates TLS with a chain libpq has no CA for, so
+            // 'require' (encrypt, but do not verify) is the right level there.
+            // 'prefer' still negotiates TLS when the server insists on it,
+            // which is why it stays the default for a local Postgres.
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // A transaction pooler — Supabase's port 6543 — cannot keep a
+            // server-side prepared statement alive between transactions, so PDO
+            // has to emulate them there.  Leaving this unset keeps libpq's
+            // native prepares, which is faster on a direct connection and is
+            // what a local Postgres uses.
+            'options' => array_filter([
+                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES'),
+            ], static fn ($value) => $value !== null),
         ],
 
         'sqlsrv' => [

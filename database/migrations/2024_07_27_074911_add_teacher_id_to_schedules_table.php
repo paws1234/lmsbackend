@@ -22,10 +22,10 @@ class AddTeacherIdToSchedulesTable extends Migration
 
     public function down()
     {
-
-        Schema::table('schedules', function (Blueprint $table) {
-            $table->dropForeign(['teacher_id']);
-            $table->dropColumn('teacher_id');
-        });
+        // up() creates the whole `schedules` table, despite what the migration
+        // is called.  Dropping only the column left the table in place, so
+        // `migrate:rollback` followed by `migrate` died on "table already
+        // exists" — dropping the table is what actually undoes up().
+        Schema::dropIfExists('schedules');
     }
 }
