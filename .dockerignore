@@ -1,0 +1,23 @@
+# Queue/cache files Laravel and Composer generate on the host.
+/bootstrap/cache/*.php
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*.log
+
+# Local environment and VCS metadata never belong in the image.
+.env
+.env.*
+.git
+.gitignore
+.vscode
+.idea
+
+# Dependencies are installed inside the image.
+/vendor
+/node_modules
+
+# Host-specific bits.
+/start-lms.bat
+/start_lms.sh
+.phpunit.result.cache
